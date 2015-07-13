@@ -29,12 +29,18 @@
 
 DS1307RTC::DS1307RTC()
 {
-  Wire.begin();
+  // At the moment, Arduino for STM32 (STM32duino) doesn't support GPIO or SPI etc operations inside constructors. 
+  #ifndef __STM32F1__
+    Wire.begin();
+  #endif
 }
   
 // PUBLIC FUNCTIONS
 time_t DS1307RTC::get()   // Aquire data from buffer and convert to time_t
 {
+  #ifdef __STM32F1__
+    DS1307RTC_INIT_WIRE();
+  #endif
   tmElements_t tm;
   if (read(tm) == false) return 0;
   return(makeTime(tm));
@@ -42,6 +48,9 @@ time_t DS1307RTC::get()   // Aquire data from buffer and convert to time_t
 
 bool DS1307RTC::set(time_t t)
 {
+  #ifdef __STM32F1__
+    DS1307RTC_INIT_WIRE();
+  #endif
   tmElements_t tm;
   breakTime(t, tm);
   tm.Second |= 0x80;  // stop the clock 
@@ -53,6 +62,9 @@ bool DS1307RTC::set(time_t t)
 // Aquire data from the RTC chip in BCD format
 bool DS1307RTC::read(tmElements_t &tm)
 {
+  #ifdef __STM32F1__
+    DS1307RTC_INIT_WIRE();
+  #endif
   uint8_t sec;
   Wire.beginTransmission(DS1307_CTRL_ID);
 #if ARDUINO >= 100  
@@ -94,6 +106,9 @@ bool DS1307RTC::read(tmElements_t &tm)
 
 bool DS1307RTC::write(tmElements_t &tm)
 {
+  #ifdef __STM32F1__
+    DS1307RTC_INIT_WIRE();
+  #endif
   Wire.beginTransmission(DS1307_CTRL_ID);
 #if ARDUINO >= 100  
   Wire.write((uint8_t)0x00); // reset register pointer  
@@ -135,6 +150,10 @@ uint8_t DS1307RTC::bcd2dec(uint8_t num)
 {
   return ((num/16 * 10) + (num % 16));
 }
+
+#ifdef __STM32F1__
+  bool DS1307RTC::_do_init = true;
+#endif
 
 bool DS1307RTC::exists = false;
 
