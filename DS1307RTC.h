@@ -18,6 +18,7 @@ class DS1307RTC
     static bool set(time_t t);
     static bool read(tmElements_t &tm);
     static bool write(tmElements_t &tm);
+    static bool sqw(int sqw);
     static bool chipPresent() { return exists; }
 
   private:
