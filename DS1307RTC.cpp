@@ -122,6 +122,52 @@ bool DS1307RTC::write(tmElements_t &tm)
   return true;
 }
 
+bool DS1307RTC::sqwOutput(uint32_t frequency)
+{
+  switch (frequency) {
+    case 0:
+      return sqw(0x80);
+      break;
+    case 1:
+      return sqw(0x10);
+      break;
+    case 4096:
+      return sqw(0x11);
+      break;
+    case 8192:
+      return sqw(0x12);
+      break;
+    case 32768:
+      return sqw(0x13);
+      break;
+  }
+
+  return false;
+}
+
+bool DS1307RTC::sqw(uint8_t sqw)
+{
+  Wire.beginTransmission(DS1307_CTRL_ID);
+#if ARDUINO >= 100
+  Wire.write((uint8_t)7);       // set register pointer
+#else
+  Wire.send(7);
+#endif
+
+#if ARDUINO >= 100
+  Wire.write(sqw);
+#else
+  Wire.send(sqw);
+#endif
+
+  if (Wire.endTransmission() != 0) {
+    exists = false;
+    return false;
+  }
+  exists = true;
+  return true;
+}
+
 // PRIVATE FUNCTIONS
 
 // Convert Decimal to Binary Coded Decimal (BCD)
