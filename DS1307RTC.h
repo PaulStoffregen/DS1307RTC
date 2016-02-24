@@ -19,6 +19,9 @@ class DS1307RTC
     static bool read(tmElements_t &tm);
     static bool write(tmElements_t &tm);
     static bool chipPresent() { return exists; }
+    static unsigned char isRunning();
+    static void setCalibration(char calValue);
+    static char getCalibration();
 
   private:
     static bool exists;
