@@ -2,7 +2,7 @@
  * DS1307RTC.h - library for DS1307 RTC
   
   Copyright (c) Michael Margolis 2009
-  This library is intended to be uses with Arduino Time.h library functions
+  This library is intended to be uses with Arduino Time library functions
 
   The library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
