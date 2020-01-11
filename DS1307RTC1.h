@@ -16,8 +16,8 @@ class DS1307RTC
     DS1307RTC();
     static time_t get();
     static bool set(time_t t);
-    static bool read(tmElements_t &tm);
-    static bool write(tmElements_t &tm);
+    static bool read(val);
+    static bool write(val);
     static bool chipPresent() { return exists; }
     static unsigned char isRunning();
     static void setCalibration(char calValue);
