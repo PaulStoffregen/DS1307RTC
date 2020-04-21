@@ -35,7 +35,10 @@
 
 DS1307RTC::DS1307RTC()
 {
+  // At the moment, Arduino for STM32 (STM32duino) doesn't support GPIO or SPI etc operations inside constructors.
+#ifndef __STM32F1__
   Wire.begin();
+#endif
 }
   
 // PUBLIC FUNCTIONS
@@ -56,6 +59,9 @@ bool DS1307RTC::set(time_t t)
 // Aquire data from the RTC chip in BCD format
 bool DS1307RTC::read(tmElements_t &tm)
 {
+#ifdef __STM32F1__
+  DS1307RTC_INIT_WIRE();
+#endif
   uint8_t sec;
   Wire.beginTransmission(DS1307_CTRL_ID);
 #if ARDUINO >= 100  
@@ -97,6 +103,9 @@ bool DS1307RTC::read(tmElements_t &tm)
 
 bool DS1307RTC::write(tmElements_t &tm)
 {
+#ifdef __STM32F1__
+  DS1307RTC_INIT_WIRE();
+#endif
   // To eliminate any potential race conditions,
   // stop the clock before writing the values,
   // then restart it after.
@@ -145,6 +154,9 @@ bool DS1307RTC::write(tmElements_t &tm)
 
 unsigned char DS1307RTC::isRunning()
 {
+#ifdef __STM32F1__
+  DS1307RTC_INIT_WIRE();
+#endif
   Wire.beginTransmission(DS1307_CTRL_ID);
 #if ARDUINO >= 100  
   Wire.write((uint8_t)0x00); 
@@ -164,6 +176,9 @@ unsigned char DS1307RTC::isRunning()
 
 void DS1307RTC::setCalibration(char calValue)
 {
+#ifdef __STM32F1__
+  DS1307RTC_INIT_WIRE();
+#endif
   unsigned char calReg = abs(calValue) & 0x1f;
   if (calValue >= 0) calReg |= 0x20; // S bit is positive to speed up the clock
   Wire.beginTransmission(DS1307_CTRL_ID);
@@ -179,6 +194,9 @@ void DS1307RTC::setCalibration(char calValue)
 
 char DS1307RTC::getCalibration()
 {
+#ifdef __STM32F1__
+  DS1307RTC_INIT_WIRE();
+#endif
   Wire.beginTransmission(DS1307_CTRL_ID);
 #if ARDUINO >= 100  
   Wire.write((uint8_t)0x07); 
@@ -211,6 +229,10 @@ uint8_t DS1307RTC::bcd2dec(uint8_t num)
 {
   return ((num/16 * 10) + (num % 16));
 }
+
+#ifdef __STM32F1__
+bool DS1307RTC::_do_init = true;
+#endif
 
 bool DS1307RTC::exists = false;
 
