@@ -1,12 +1,23 @@
 /*
  * DS1307RTC.h - library for DS1307 RTC
- * This library is intended to be uses with Arduino Time library functions
+ * This library is intended to be used with Arduino Time library functions
  */
 
 #ifndef DS1307RTC_h
 #define DS1307RTC_h
 
 #include <TimeLib.h>
+
+typedef enum
+{
+    sqwInvalid = -1,
+    sqwLow = 0,
+    sqwHigh,
+    sqw1Hz,
+    sqw4kHz,
+    sqw8kHz,
+    sqw32kHz
+} sqwOutput_t;
 
 // library interface description
 class DS1307RTC
@@ -23,6 +34,8 @@ class DS1307RTC
     static void setCalibration(char calValue);
     static char getCalibration();
 
+    static void setSqwOutput(sqwOutput_t);
+    static sqwOutput_t getSqwOutput(void);
   private:
     static bool exists;
     static uint8_t dec2bcd(uint8_t num);
@@ -33,7 +46,7 @@ class DS1307RTC
 #undef RTC // workaround for Arduino Due, which defines "RTC"...
 #endif
 
-extern DS1307RTC RTC;
+extern DS1307RTC RTC;   // just for the constructor to init Wire
 
 #endif
  
