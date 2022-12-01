@@ -1,4 +1,3 @@
-#include <Wire.h>
 #include <TimeLib.h>
 #include <DS1307RTC.h>
 
@@ -70,6 +69,14 @@ bool getDate(const char *str)
   tm.Day = Day;
   tm.Month = monthIndex + 1;
   tm.Year = CalendarYrToTm(Year);
+  // Calculate week day lazily
+  // We make use of makeTime to get the epoch time
+  // and return from epoch with breakTime,
+  // which yields the week day
+  tm.Wday = 0;
+  time_t time_epoch = makeTime(tm);
+  breakTime(time_epoch, tm);
+  if (tm.Wday == 0) return false;
   return true;
 }
 
