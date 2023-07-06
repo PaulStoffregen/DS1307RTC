@@ -31,7 +31,15 @@
 #endif
 #include "DS1307RTC.h"
 
-#define DS1307_CTRL_ID 0x68 
+#define DS1307_CTRL_ID 0x68
+
+#if ARDUINO >= 100
+  #define DS1307_WIRE_WRITE(x) Wire.write(x)
+  #define DS1307_WIRE_READ() Wire.read()
+#else
+  #define DS1307_WIRE_WRITE(x) Wire.send(x)
+  #define DS1307_WIRE_READ() Wire.receive()
+#endif
 
 DS1307RTC::DS1307RTC()
 {
@@ -58,11 +66,9 @@ bool DS1307RTC::read(tmElements_t &tm)
 {
   uint8_t sec;
   Wire.beginTransmission(DS1307_CTRL_ID);
-#if ARDUINO >= 100  
-  Wire.write((uint8_t)0x00); 
-#else
-  Wire.send(0x00);
-#endif  
+
+  DS1307_WIRE_WRITE((uint8_t)0x00); 
+
   if (Wire.endTransmission() != 0) {
     exists = false;
     return false;
@@ -72,25 +78,16 @@ bool DS1307RTC::read(tmElements_t &tm)
   // request the 7 data fields   (secs, min, hr, dow, date, mth, yr)
   Wire.requestFrom(DS1307_CTRL_ID, tmNbrFields);
   if (Wire.available() < tmNbrFields) return false;
-#if ARDUINO >= 100
-  sec = Wire.read();
+
+  sec = DS1307_WIRE_READ();
   tm.Second = bcd2dec(sec & 0x7f);   
-  tm.Minute = bcd2dec(Wire.read() );
-  tm.Hour =   bcd2dec(Wire.read() & 0x3f);  // mask assumes 24hr clock
-  tm.Wday = bcd2dec(Wire.read() );
-  tm.Day = bcd2dec(Wire.read() );
-  tm.Month = bcd2dec(Wire.read() );
-  tm.Year = y2kYearToTm((bcd2dec(Wire.read())));
-#else
-  sec = Wire.receive();
-  tm.Second = bcd2dec(sec & 0x7f);   
-  tm.Minute = bcd2dec(Wire.receive() );
-  tm.Hour =   bcd2dec(Wire.receive() & 0x3f);  // mask assumes 24hr clock
-  tm.Wday = bcd2dec(Wire.receive() );
-  tm.Day = bcd2dec(Wire.receive() );
-  tm.Month = bcd2dec(Wire.receive() );
-  tm.Year = y2kYearToTm((bcd2dec(Wire.receive())));
-#endif
+  tm.Minute = bcd2dec(DS1307_WIRE_READ() );
+  tm.Hour =   bcd2dec(DS1307_WIRE_READ() & 0x3f);  // mask assumes 24hr clock
+  tm.Wday = bcd2dec(DS1307_WIRE_READ() );
+  tm.Day = bcd2dec(DS1307_WIRE_READ() );
+  tm.Month = bcd2dec(DS1307_WIRE_READ() );
+  tm.Year = y2kYearToTm((bcd2dec(DS1307_WIRE_READ())));
+
   if (sec & 0x80) return false; // clock is halted
   return true;
 }
@@ -101,25 +98,16 @@ bool DS1307RTC::write(tmElements_t &tm)
   // stop the clock before writing the values,
   // then restart it after.
   Wire.beginTransmission(DS1307_CTRL_ID);
-#if ARDUINO >= 100  
-  Wire.write((uint8_t)0x00); // reset register pointer  
-  Wire.write((uint8_t)0x80); // Stop the clock. The seconds will be written last
-  Wire.write(dec2bcd(tm.Minute));
-  Wire.write(dec2bcd(tm.Hour));      // sets 24 hour format
-  Wire.write(dec2bcd(tm.Wday));   
-  Wire.write(dec2bcd(tm.Day));
-  Wire.write(dec2bcd(tm.Month));
-  Wire.write(dec2bcd(tmYearToY2k(tm.Year))); 
-#else  
-  Wire.send(0x00); // reset register pointer  
-  Wire.send(0x80); // Stop the clock. The seconds will be written last
-  Wire.send(dec2bcd(tm.Minute));
-  Wire.send(dec2bcd(tm.Hour));      // sets 24 hour format
-  Wire.send(dec2bcd(tm.Wday));   
-  Wire.send(dec2bcd(tm.Day));
-  Wire.send(dec2bcd(tm.Month));
-  Wire.send(dec2bcd(tmYearToY2k(tm.Year)));   
-#endif
+
+  DS1307_WIRE_WRITE((uint8_t)0x00); // reset register pointer  
+  DS1307_WIRE_WRITE((uint8_t)0x80); // Stop the clock. The seconds will be written last
+  DS1307_WIRE_WRITE(dec2bcd(tm.Minute));
+  DS1307_WIRE_WRITE(dec2bcd(tm.Hour));      // sets 24 hour format
+  DS1307_WIRE_WRITE(dec2bcd(tm.Wday));   
+  DS1307_WIRE_WRITE(dec2bcd(tm.Day));
+  DS1307_WIRE_WRITE(dec2bcd(tm.Month));
+  DS1307_WIRE_WRITE(dec2bcd(tmYearToY2k(tm.Year))); 
+
   if (Wire.endTransmission() != 0) {
     exists = false;
     return false;
@@ -128,13 +116,10 @@ bool DS1307RTC::write(tmElements_t &tm)
 
   // Now go back and set the seconds, starting the clock back up as a side effect
   Wire.beginTransmission(DS1307_CTRL_ID);
-#if ARDUINO >= 100  
-  Wire.write((uint8_t)0x00); // reset register pointer  
-  Wire.write(dec2bcd(tm.Second)); // write the seconds, with the stop bit clear to restart
-#else  
-  Wire.send(0x00); // reset register pointer  
-  Wire.send(dec2bcd(tm.Second)); // write the seconds, with the stop bit clear to restart
-#endif
+
+  DS1307_WIRE_WRITE((uint8_t)0x00); // reset register pointer  
+  DS1307_WIRE_WRITE(dec2bcd(tm.Second)); // write the seconds, with the stop bit clear to restart
+
   if (Wire.endTransmission() != 0) {
     exists = false;
     return false;
@@ -146,20 +131,14 @@ bool DS1307RTC::write(tmElements_t &tm)
 unsigned char DS1307RTC::isRunning()
 {
   Wire.beginTransmission(DS1307_CTRL_ID);
-#if ARDUINO >= 100  
-  Wire.write((uint8_t)0x00); 
-#else
-  Wire.send(0x00);
-#endif  
+
+  DS1307_WIRE_WRITE((uint8_t)0x00); 
+ 
   Wire.endTransmission();
 
   // Just fetch the seconds register and check the top bit
   Wire.requestFrom(DS1307_CTRL_ID, 1);
-#if ARDUINO >= 100
-  return !(Wire.read() & 0x80);
-#else
-  return !(Wire.receive() & 0x80);
-#endif  
+  return !(DS1307_WIRE_READ() & 0x80); 
 }
 
 void DS1307RTC::setCalibration(char calValue)
@@ -167,32 +146,23 @@ void DS1307RTC::setCalibration(char calValue)
   unsigned char calReg = abs(calValue) & 0x1f;
   if (calValue >= 0) calReg |= 0x20; // S bit is positive to speed up the clock
   Wire.beginTransmission(DS1307_CTRL_ID);
-#if ARDUINO >= 100  
-  Wire.write((uint8_t)0x07); // Point to calibration register
-  Wire.write(calReg);
-#else  
-  Wire.send(0x07); // Point to calibration register
-  Wire.send(calReg);
-#endif
+  DS1307_WIRE_WRITE((uint8_t)0x07); // Point to calibration register
+  DS1307_WIRE_WRITE(calReg);
   Wire.endTransmission();  
 }
 
 char DS1307RTC::getCalibration()
 {
   Wire.beginTransmission(DS1307_CTRL_ID);
-#if ARDUINO >= 100  
-  Wire.write((uint8_t)0x07); 
-#else
-  Wire.send(0x07);
-#endif  
+
+  DS1307_WIRE_WRITE((uint8_t)0x07); 
+ 
   Wire.endTransmission();
 
   Wire.requestFrom(DS1307_CTRL_ID, 1);
-#if ARDUINO >= 100
-  unsigned char calReg = Wire.read();
-#else
-  unsigned char calReg = Wire.receive();
-#endif
+  
+  unsigned char calReg = DS1307_WIRE_READ();
+
   char out = calReg & 0x1f;
   if (!(calReg & 0x20)) out = -out; // S bit clear means a negative value
   return out;
